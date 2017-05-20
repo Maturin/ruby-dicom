@@ -164,6 +164,14 @@ module DICOM
         # We do not create an element for the delimiter items.
         # The occurance of such a tag indicates that a sequence or item has ended, and the parent must be changed:
         @current_parent = @current_parent.parent
+
+        # Some modalities like GE cardiac ultrasound systems put data after the pixel data. Since the pixel data is
+        # encapsulated directly in some kind of sequence items, we must close the complete sequence, when the first
+        # delimter it found.
+        if @current_parent.is_a?(DICOM::Sequence) && @current_parent.tag == PIXEL_TAG
+          @current_parent = @current_parent.parent
+          @enc_image = false
+        end
       else
         check_duplicate(tag, 'Element')
         unless @current_parent[tag] and !@overwrite
